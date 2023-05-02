@@ -140,7 +140,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run("data/gaussian/unet", retrain=True)
+    run("data/gaussian/unet", retrain=False)
 
 
 
