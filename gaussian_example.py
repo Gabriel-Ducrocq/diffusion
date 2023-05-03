@@ -100,7 +100,6 @@ def run(network_path, retrain=False):
                 optimizer.step()
                 optimizer.zero_grad()
                 all_losses.append(loss.detach().numpy())
-
                 #print("Loss:", loss)
 
             net.eval()
@@ -117,7 +116,7 @@ def run(network_path, retrain=False):
 
 
     unet = torch.load(network_path)
-    times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None]
+    times = torch.tensor(np.linspace(0, 1, 1000), dtype=torch.float32)[:, None]
     traj, test = brid.euler_maruyama(torch.randn(10000, 1),times[:, :, None], 1, unet)
 
     #np.save("data/gaussian/generatedData2.npy", test[:, 0].detach().numpy())

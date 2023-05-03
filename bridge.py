@@ -209,28 +209,14 @@ class BrownianBridgeArbitrary:
         int_t = self.int_sigma_sq_t(0, t)
         int_tmin = self.int_sigma_sq_t(0, t_min)
         int_tmax = self.int_sigma_sq_t(0, t_max)
-        denom = int_t*int_tmax - int_tmin**2
+        denom = int_tmin*int_tmax - int_tmin**2
         first_term = int_tmin*int_tmax - int_t*int_tmin
         second_term = int_tmin*int_t - int_tmin**2
 
         avg = 1/denom * (first_term*x_min + second_term*x_max)
-        var = 1/denom * (first_term*int_tmin + second_term*int_tmax)
+        var = int_t - 1/denom * (first_term*int_tmin + second_term*int_tmax)
 
         return torch.randn_like(avg) * torch.sqrt(var) + avg
-
-    def sample(self, t, x0, xT, t0=0, T=1):
-        """
-        get the conditionnal mean of the Brownian bridge
-        :param t: torch tensor(N_batch, 1), times at which we sample
-        :param x0: torch tensor (N_batch, self.dimension), starting values of the bridge.
-        :param xT: torch tensor (N_batch, self.dimension), ending values of the bridge.
-        :param t0: torch tensor(N_batch, 1), times of the starting value
-        :param T: torch tensor(N_batch, 1), times of the ending values
-        :return: torch tensor (N_batch, self.dimension), sampled conditional value marginal.
-        """
-        means = self.get_means(t, x0, xT, t0, T)
-        variances = self.get_variances(t, t0, T)
-        return torch.randn_like(means) * torch.sqrt(variances) + means
 
     def compute_drift_maruyama(self, x_t, t, tau, network, t0=0, Unet=False):
         """
@@ -287,6 +273,9 @@ class BrownianBridgeArbitrary:
             # print(x_t_new)
             # print("\n")
             x_t = x_t_new
+            #if t_new == 1:
+            #    print("OUT !")
+            #    return np.array(trajectories), x_t
             # print(drift)
             # print(x_t_new)
             # print("\n\n")
