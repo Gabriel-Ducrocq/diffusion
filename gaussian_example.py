@@ -84,7 +84,7 @@ def run(network_path, retrain=False):
 
 
         net = Network([2, 256, 256, 256], [256, 256, 256, 1])
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.0003)
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         epochs = 250
         input_test = torch.concat([perturbed_dataset_test, times_test], dim=-1)
         for n_epoch in range(epochs):
@@ -127,7 +127,7 @@ def run(network_path, retrain=False):
     plt.hist(np.random.normal(size=10000)+0.5, density=True, alpha=0.5, bins=20)
     plt.show()
 
-    plt.boxplot(test, showfliers=False)
+    plt.boxplot(test, showfliers=True)
     plt.show()
 
     #np.save("trajectory.npy", traj)

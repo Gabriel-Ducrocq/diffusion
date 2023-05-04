@@ -11,17 +11,51 @@ import numpy as np
 from utils import dataSet
 import wandb
 
-wandb.init(
-    project="diffusion-gaussian-example",
+#wandb.init(
+#    project="diffusion-gaussian-example",
 
-    config={
-        "learning_rate": 0.003,
-        "optimizer": "adam",
-        "architecure": "MLP",
-        "size": [256, 256, 256, 1],
-        "epochs": 10
-    }
-)
+#    config={
+#        "learning_rate": 0.003,
+#        "optimizer": "adam",
+#        "architecure": "MLP",
+#        "size": [256, 256, 256, 1],
+#        "epochs": 10
+#    }
+#)
+
+def generate_dataset(N_sample):
+    start_times = torch.floor(torch.rand(size=(N_sample, 1)) * 2)
+    end_times = start_times + 1
+    dataset_zero = torch.zeros(size=(N_sample, 1))
+    dataset_one = torch.tensor(np.random.normal(size=(N_sample, 1)), dtype=torch.float32) + 1
+    dataset_two = torch.tensor(np.random.normal(size=(N_sample, 1)), dtype=torch.float32) + 2
+    dataset_start = dataset_zero
+    dataset_start[start_times == 1.0] = dataset_one[start_times == 1.0]
+    dataset_end = dataset_one
+    dataset_end[end_times == 2.0] = dataset_two[end_times == 2.0]
+
+    times = torch.rand((N_sample, 1)) + start_times
+
+
+    print(torch.unique(end_times[start_times==0]))
+    print(torch.unique(end_times[start_times==1]))
+    plt.boxplot(times[start_times ==0])
+    plt.boxplot(times[start_times == 1])
+    plt.show()
+
+    plt.hist(dataset_start[start_times==0], density=True, alpha=0.5, bins=500)
+    plt.hist(dataset_start[start_times==1], density=True, alpha=0.5, bins=500)
+    plt.show()
+
+    plt.hist(dataset_end[start_times==0], density=True, alpha=0.5, bins=500)
+    plt.hist(dataset_end[start_times==1], density=True, alpha=0.5, bins=500)
+    plt.show()
+
+    plt.hist(dataset_end[end_times==1], density=True, alpha=0.5, bins=500)
+    plt.hist(dataset_end[end_times==2], density=True, alpha=0.5, bins=500)
+    plt.show()
+
+    return start_times, end_times, times, dataset_start, dataset_end
 
 
 class Network(nn.Module):
@@ -52,36 +86,42 @@ def l2_loss(true_data, pred_data):
 
 def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250):
     brid = BrownianBridgeArbitrary(1, a=1, b=3)
+    #brid = BrownianBridgeArbitrary(1, a=1, b=0.5)
     if retrain is True:
         # Training set
-        start_times = torch.floor(torch.rand(size=(train_size, 1)))
+        start_times = torch.floor(torch.rand(size=(train_size, 1))*2)
         end_times = start_times + 1
         dataset_zero = torch.zeros(size=(train_size, 1))
         dataset_one = torch.tensor(np.random.normal(size=(train_size, 1)), dtype=torch.float32) + 1
-        #dataset_two = torch.tensor(np.random.normal(size=(train_size, 1)), dtype=torch.float32) + 2
+        dataset_two = torch.tensor(np.random.normal(size=(train_size, 1)), dtype=torch.float32) + 2
         dataset_start = dataset_zero
+        dataset_start[start_times == 1.0] = dataset_one[start_times == 1.0]
         dataset_end = dataset_one
-        #dataset_end[end_times == 2] = dataset_two[end_times == 2]
+        dataset_end[end_times == 2.0] = dataset_two[end_times == 2.0]
 
+        times = torch.rand((train_size, 1)) + start_times
 
-        times = torch.rand((train_size, 1)) #+ start_times
-        print(start_times)
+        #print(brid.sample_bridge(torch.tensor(np.array([[1.5]]), dtype=torch.float32),
+        #                         torch.ones((1,1), dtype=torch.float32), 2*torch.ones((1,1), dtype=torch.float32),
+        #      2*torch.ones((1,1), dtype=torch.float32), 2*torch.ones((1,1), dtype=torch.float32)))
+
         perturbed_dataset = brid.sample_bridge(times, start_times, end_times, dataset_start, dataset_end)
-
         #torch.save(dataset, "data/gaussian_multiple/dataset")
         #torch.save(times, "data/gaussian_multiple/times")
         #torch.save(perturbed_dataset, "data/gaussian_multiple/perturbed_dataset")
 
         # Test set
-        start_times_test = torch.floor(torch.rand(size=(5000, 1)))
+        start_times_test = torch.floor(torch.rand(size=(5000, 1))*2)
         end_times_test = start_times_test + 1
         dataset_zero_test = torch.zeros(size=(5000, 1))
         dataset_one_test = torch.tensor(np.random.normal(size=(5000, 1)), dtype=torch.float32) + 1
-        #dataset_two_test = torch.tensor(np.random.normal(size=(5000, 1)), dtype=torch.float32) + 2
+        dataset_two_test = torch.tensor(np.random.normal(size=(5000, 1)), dtype=torch.float32) + 2
         dataset_start_test = dataset_zero_test
+        dataset_start_test[start_times_test == 1] = dataset_one_test[start_times_test == 1]
         dataset_end_test = dataset_one_test
+        dataset_end_test[end_times_test == 2] = dataset_two_test[end_times_test == 2]
 
-        times_test = torch.rand((5000, 1)) #+ start_times_test
+        times_test = torch.rand((5000, 1)) + start_times_test
         perturbed_dataset_test = brid.sample_bridge(times_test, start_times_test, end_times_test, dataset_start_test,
                                                     dataset_end_test)
 
@@ -108,7 +148,6 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
 
         net.eval()
         pred_test = net.forward(input_test)
-        print(pred_test)
         loss_test = l2_loss(dataset_end_test, pred_test)
         #print("EPOCH:", n_epoch)
         print("LOSS TEST", torch.sqrt(loss_test))
@@ -154,7 +193,6 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     print(times)
     traj, test = brid.euler_maruyama(torch.zeros(10000, 1), times[:, :, None], 1, unet)
 
-    # np.save("data/gaussian/generatedData2.npy", test[:, 0].detach().numpy())
     print("\n\n")
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
@@ -173,8 +211,8 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-
-    run("data/gaussian_multiple/unet", retrain=False, train_size=500000, batch_size=500, epochs=10000)
+    generate_dataset(500000)
+    run("data/gaussian_multiple/unet", retrain=False,  train_size=500000, batch_size=500, epochs=10000)
 
 
 

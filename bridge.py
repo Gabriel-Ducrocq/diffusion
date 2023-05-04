@@ -49,8 +49,8 @@ class BrownianBridge:
         :param T: float, time of the ending value
         :return: torch tensor (N_batch, 1), conditional variances at time t
         """
-
-        return self.int_sigma_sq_t(t0, T)*(1- self.int_sigma_sq_t(t0, t)/self.int_sigma_sq_t(t0, T))
+        ### Change from T to t in the first term of the product
+        return self.int_sigma_sq_t(t0, t)*(1- self.int_sigma_sq_t(t0, t)/self.int_sigma_sq_t(t0, T))
 
     def sample(self, t, x0, xT,  t0=0, T=1):
         """
@@ -213,8 +213,21 @@ class BrownianBridgeArbitrary:
         first_term = int_tmin*int_tmax - int_t*int_tmin
         second_term = int_tmin*int_t - int_tmin**2
 
+        avg_0 = (self.int_sigma_sq_t(t_min, t)/self.int_sigma_sq_t(t_min, t_max))*(x_max - x_min) + x_min
+        var_0 = self.int_sigma_sq_t(t_min, t)*(1- self.int_sigma_sq_t(t_min, t)/self.int_sigma_sq_t(t_min, t_max))
+
         avg = 1/denom * (first_term*x_min + second_term*x_max)
-        var = int_t - 1/denom * (first_term*int_tmin + second_term*int_tmax)
+        var = int_t - 1/denom * (first_term*int_tmin + second_term*int_t)
+
+        avg[t_min == 0] = avg_0[t_min == 0]
+        var[t_min == 0] = var_0[t_min == 0]
+
+        print("avg", avg)
+        print("var", var)
+        print("sqrt var:", torch.sqrt(var))
+        print("t_min", t_min)
+        print("t", t)
+        print("\n")
 
         return torch.randn_like(avg) * torch.sqrt(var) + avg
 
