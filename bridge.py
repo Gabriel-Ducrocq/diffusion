@@ -221,14 +221,6 @@ class BrownianBridgeArbitrary:
 
         avg[t_min == 0] = avg_0[t_min == 0]
         var[t_min == 0] = var_0[t_min == 0]
-
-        print("avg", avg)
-        print("var", var)
-        print("sqrt var:", torch.sqrt(var))
-        print("t_min", t_min)
-        print("t", t)
-        print("\n")
-
         return torch.randn_like(avg) * torch.sqrt(var) + avg
 
     def compute_drift_maruyama(self, x_t, t, tau, network, t0=0, Unet=False):
@@ -250,6 +242,8 @@ class BrownianBridgeArbitrary:
                 batch_size = x_t.shape[0]
                 t = t.repeat(batch_size, 1)
                 input = torch.concat([x_t, t], dim=-1)
+                print("input SURE")
+                print(input)
                 approximate_expectation = network.forward(input)
 
         # plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
@@ -259,7 +253,7 @@ class BrownianBridgeArbitrary:
                     self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t) ** 2
         return drift
 
-    def euler_maruyama(self, x_0, times, tau, network):
+    def euler_maruyama(self, x_0, times, tau, network, t_0=torch.zeros((1, 1), dtype=torch.float32)):
         """
 
         :param x_0: torch.tensor(1, dim_process), starting point of the Euler-Maruyama scheme
@@ -270,14 +264,18 @@ class BrownianBridgeArbitrary:
         :return: torch.tensor(1, dim_process), point approximately simulated according to the posterior distribution.
         """
         x_t = x_0
-        t = torch.zeros((1, 1), dtype=torch.float32)
+        t = t_0
         trajectories = [0]
         # trajectories.append(x_t.detach().numpy()[0, :])
         batch_size = x_0.shape[0]
+        print("xt")
+        print(x_t)
         for i, t_new in enumerate(times):
             if i % 10 == 0:
                 print(i)
 
+            print("AAAAA")
+            print(i)
             drift = self.compute_drift_maruyama(x_t=x_t, t=t, tau=tau, network=network)
             ##Check transposition here
             x_t_new = x_t + drift * (t_new - t) + np.sqrt((t_new - t)) * torch.randn(
@@ -286,6 +284,8 @@ class BrownianBridgeArbitrary:
             # print(x_t_new)
             # print("\n")
             x_t = x_t_new
+            print("x_t")
+            print(drift)
             #if t_new == 1:
             #    print("OUT !")
             #    return np.array(trajectories), x_t
@@ -293,6 +293,7 @@ class BrownianBridgeArbitrary:
             # print(x_t_new)
             # print("\n\n")
             # trajectories.append(x_t.detach().numpy()[0, :])
+            print("\n\n")
             t = t_new
 
         print("done")
