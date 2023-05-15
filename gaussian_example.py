@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from utils import dataSet
 import wandb
+import time
 
 
 wandb.init(
@@ -100,6 +101,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
         for n_epoch in range(epochs):
             data = iter(dataLoad)
             all_losses = []
+            start = time.time()
             for n_batch in range(10000):
                 data_batch, perturbed_data_batch, time_batch = next(data)
                 data_batch = data_batch.to(device)
@@ -113,6 +115,8 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
                 optimizer.zero_grad()
                 all_losses.append(loss.detach().cpu().numpy())
 
+            end = time.time()
+            print("Time on epoch:", end - start)
             print("Train Loss:", np.mean(all_losses))
             net.eval()
             pred_test = net.forward(input_test)
