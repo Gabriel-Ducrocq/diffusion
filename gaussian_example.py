@@ -63,8 +63,8 @@ def l2_loss(true_data, pred_data):
 def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
-    brid = BrownianBridge(1, a=1, b=3)
-    #brid = BrownianBridge(1, a=12, b=6)
+    #brid = BrownianBridge(1, a=1, b=3)
+    brid = BrownianBridge(1, a=25, b=5)
     if retrain is True:
         #Training set
         dataset = torch.tensor(np.random.normal(size = (500000,1)) + mu, dtype=torch.float32)
@@ -131,7 +131,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
             print("\n\n\n")
 
 
-    unet = torch.load(data_path + "network")
+    unet = torch.load(data_path + "network", map_location=torch.device('cpu'))
     unet.eval()
     times = torch.tensor(np.linspace(0, 1, 1000), dtype=torch.float32)[:, None]
     traj, test = brid.euler_maruyama(torch.randn(10000, 1),times[:, :, None], 1, unet)
@@ -156,7 +156,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True, mu=50)
+    run(retrain=False, mu=50)
 
 
 
