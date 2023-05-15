@@ -24,6 +24,21 @@ class dataSet(Dataset):
         return self.images[idx], self.perturbed_images[idx], self.times[idx]
 
 
+class dataSetMultiple(Dataset):
+
+    def __init__(self, images, perturbed_images, times, dataset_num):
+        self.images = images
+        self.perturbed_images = perturbed_images
+        self.times = times
+        self.dataset_num = dataset_num
+
+    def __len__(self):
+        return self.images.shape[0]
+
+    def __getitem__(self, idx):
+        return self.images[idx], self.perturbed_images[idx], self.times[idx], self.dataset_num[idx]
+
+
 def exists(x):
     return x is not None
 

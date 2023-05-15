@@ -5,7 +5,7 @@ import torch as torch
 
 class BrownianBridge:
 
-    def __init__(self, dimension, a=3, b=4, T0 = 0, TN= 1):
+    def __init__(self, dimension, a=3, b=4, T0 = 0, TN= 1, use_unet=False):
         """
         Brownian Bridge diffusion object, with drift sigma_t.
         :param dimension: integer, dimension of the state space
@@ -20,6 +20,7 @@ class BrownianBridge:
         self.dimension = dimension
         self.T0 = T0
         self.TN = TN
+        self.use_unet = use_unet
 
 
     def sigma_t(self, t):
@@ -78,7 +79,7 @@ class BrownianBridge:
         """
         #input = torch.concat([x_t, t], dim=-1)
         with torch.no_grad():
-            if Unet:
+            if self.use_unet:
                 input = torch.reshape(x_t, (x_t.shape[0], 28, 28))
                 input = input.to(dtype=torch.float32)
                 approximate_expectation = network.forward(input[:, None, :, :], t[:, 0])
@@ -133,7 +134,7 @@ class BrownianBridge:
 
 
 if __name__=="__main__":
-    bB = BrownianBridge(28*28)
+    bB = BrownianBridge(28*28, use_unet=True)
     unet = torch.load("data/unet")
     times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None, None]
     print(times.shape)
@@ -169,34 +170,16 @@ class BrownianBridgeArbitrary:
     def sigma_t(self, t):
         return self.a * np.exp(-self.b * t)
 
+    #def sigma_t(self, t):
+    #        return self.a * np.exp(-self.b * (t-1))
+
     def int_sigma_sq_t(self, t0, t):
         return - self.a ** 2 / (2 * self.b) * (np.exp(-2 * self.b * t) - np.exp(-2 * self.b * t0))
 
-    def get_means(self, t, x0, xT, t0=0, T=1):
-        """
-        get the conditionnal mean of the Brownian bridge
-        :param t: torch tensor(N_batch, 1), times at which we sample
-        :param x0: torch tensor (N_batch, self.dimension), starting values of the bridge.
-        :param xT: torch tensor (N_batch, self.dimension), ending values of the bridge.
-        :param t0: torch tensor(N_batch, 1), times of the starting value
-        :param T: torch tensor(N_batch, 1), times of the ending values
-        :return: torch tensor (N_batch, self.dimension), conditional means at tme t
-        """
-        return (self.int_sigma_sq_t(t0, t) / self.int_sigma_sq_t(t0, T)) * (xT - x0) + x0
+    #def int_sigma_sq_t(self, t0, t):
+    #    return - self.a ** 2 / (2 * self.b) * (np.exp(-2 * self.b * (t-1)) - np.exp(-2 * self.b * (t0-1)))
 
-    def get_variances(self, t, t0=0, T=1):
-        """
-        get the conditionnal variance of the Brownian bridge, where the variance sigma_t is supposed to be proportional
-        to the identity matric
-        :param t: float, time at which we sample
-        :param t0: float, time of the starting value
-        :param T: float, time of the ending value
-        :return: torch tensor (N_batch, 1), conditional variances at time t
-        """
-
-        return self.int_sigma_sq_t(t0, T) * (1 - self.int_sigma_sq_t(t0, t) / self.int_sigma_sq_t(t0, T))
-
-    def sample_bridge(self, t, t_min, t_max, x_min, x_max):
+    def sample_bridge(self, t, t_min, t_max, x_min, x_max, x_0=0):
         """
 
         :param t: time to sample
@@ -209,21 +192,16 @@ class BrownianBridgeArbitrary:
         int_t = self.int_sigma_sq_t(0, t)
         int_tmin = self.int_sigma_sq_t(0, t_min)
         int_tmax = self.int_sigma_sq_t(0, t_max)
-        denom = int_tmin*int_tmax - int_tmin**2
-        first_term = int_tmin*int_tmax - int_t*int_tmin
-        second_term = int_tmin*int_t - int_tmin**2
+        denom = int_tmax - int_tmin
+        first_term = int_tmax - int_t
+        second_term = int_t - int_tmin
 
-        avg_0 = (self.int_sigma_sq_t(t_min, t)/self.int_sigma_sq_t(t_min, t_max))*(x_max - x_min) + x_min
-        var_0 = self.int_sigma_sq_t(t_min, t)*(1- self.int_sigma_sq_t(t_min, t)/self.int_sigma_sq_t(t_min, t_max))
-
-        avg = 1/denom * (first_term*x_min + second_term*x_max)
+        ##I need to add an x_0 because these x_t is Gaussian rv with mean x_0
+        avg = 1/denom * (first_term*(x_min - x_0) + second_term*(x_max-x_0)) + x_0
         var = int_t - 1/denom * (first_term*int_tmin + second_term*int_t)
-
-        avg[t_min == 0] = avg_0[t_min == 0]
-        var[t_min == 0] = var_0[t_min == 0]
         return torch.randn_like(avg) * torch.sqrt(var) + avg
 
-    def compute_drift_maruyama(self, x_t, t, tau, network, t0=0, Unet=False):
+    def compute_drift_maruyama(self, x_t, t, tau, network, dataset_n, t0=0, Unet=False):
         """
         Computing the drift part of the SDE
         :param x_t:
@@ -241,19 +219,15 @@ class BrownianBridgeArbitrary:
             else:
                 batch_size = x_t.shape[0]
                 t = t.repeat(batch_size, 1)
-                input = torch.concat([x_t, t], dim=-1)
-                print("input SURE")
-                print(input)
+                input = torch.concat([x_t, t, dataset_n], dim=-1)
                 approximate_expectation = network.forward(input)
 
-        # plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
-        # plt.show()
         approximate_expectation = torch.reshape(approximate_expectation, (x_t.shape[0], self.dimension))
         drift = (approximate_expectation - x_t) / (
                     self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t) ** 2
         return drift
 
-    def euler_maruyama(self, x_0, times, tau, network, t_0=torch.zeros((1, 1), dtype=torch.float32)):
+    def euler_maruyama(self, x_0, times, tau, network, dataset_n, t_0=torch.zeros((1, 1), dtype=torch.float32)):
         """
 
         :param x_0: torch.tensor(1, dim_process), starting point of the Euler-Maruyama scheme
@@ -268,32 +242,20 @@ class BrownianBridgeArbitrary:
         trajectories = [0]
         # trajectories.append(x_t.detach().numpy()[0, :])
         batch_size = x_0.shape[0]
+        print("Time")
+        print(t)
         print("xt")
         print(x_t)
         for i, t_new in enumerate(times):
             if i % 10 == 0:
                 print(i)
 
-            print("AAAAA")
-            print(i)
-            drift = self.compute_drift_maruyama(x_t=x_t, t=t, tau=tau, network=network)
+            #### I should add the t_min !!!!
+            drift = self.compute_drift_maruyama(x_t=x_t, t=t, tau=tau, network=network,  dataset_n=dataset_n)
             ##Check transposition here
             x_t_new = x_t + drift * (t_new - t) + np.sqrt((t_new - t)) * torch.randn(
                 (batch_size, self.dimension)) * self.sigma_t(t)
-            # print(drift)
-            # print(x_t_new)
-            # print("\n")
             x_t = x_t_new
-            print("x_t")
-            print(drift)
-            #if t_new == 1:
-            #    print("OUT !")
-            #    return np.array(trajectories), x_t
-            # print(drift)
-            # print(x_t_new)
-            # print("\n\n")
-            # trajectories.append(x_t.detach().numpy()[0, :])
-            print("\n\n")
             t = t_new
 
         print("done")
