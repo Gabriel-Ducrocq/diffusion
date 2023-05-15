@@ -111,7 +111,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
-                all_losses.append(loss.detach().numpy())
+                all_losses.append(loss.detach().cpu().numpy())
 
             print("Train Loss:", np.mean(all_losses))
             net.eval()
@@ -122,7 +122,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
             torch.save(net, data_path + "network")
-            wandb.log({"train_losses": all_losses, "test_loss": loss_test})
+            wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
 
