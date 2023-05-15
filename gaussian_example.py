@@ -94,7 +94,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
         net = net.to(device)
         #optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
-        epochs = 250
+        epochs = 10000
         input_test = torch.concat([perturbed_dataset_test, times_test], dim=-1)
         input_test = input_test.to(device)
         dataset_test = dataset_test.to(device)
