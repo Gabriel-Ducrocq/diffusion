@@ -60,7 +60,7 @@ def l2_loss(true_data, pred_data):
     return torch.mean((true_data - pred_data)**2)
 
 
-def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
+def run(retrain=False, mu = 1, data_path="data/gaussian_experiment_mu100/"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
     #brid = BrownianBridge(1, a=1, b=3)
@@ -156,7 +156,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True, mu=50)
+    run(retrain=True, mu=100)
 
 
 
