@@ -92,15 +92,17 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment/"):
         net = Network([2, 256, 256, 256], [256, 256, 256, 1])
         net = net.to(device)
         #optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.0003)
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         epochs = 250
         input_test = torch.concat([perturbed_dataset_test, times_test], dim=-1)
         input_test = input_test.to(device)
+        dataset_test = dataset_test.to(device)
         for n_epoch in range(epochs):
             data = iter(dataLoad)
             all_losses = []
             for n_batch in range(10000):
                 data_batch, perturbed_data_batch, time_batch = next(data)
+                data_batch = data_batch.to(device)
                 batch_size = data_batch.shape[0]
                 input_batch = torch.concat([perturbed_data_batch, time_batch], dim = -1)
                 input_batch = input_batch.to(device)
