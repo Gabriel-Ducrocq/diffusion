@@ -96,6 +96,10 @@ class BrownianBridge:
 
         #plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
         #plt.show()
+        print(approximate_expectation)
+        print(self.int_sigma_sq_t(t0, tau))
+        print(self.int_sigma_sq_t(t0, t))
+        print("\n\n")
         approximate_expectation = torch.reshape(approximate_expectation, (x_t.shape[0], self.dimension))
         drift = (approximate_expectation - x_t)/(self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t)**2
         return drift

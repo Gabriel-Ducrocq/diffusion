@@ -11,28 +11,29 @@ import numpy as np
 from utils import dataSet, dataSetMultiple
 import wandb
 
-#wandb.init(
-#    project="diffusion-gaussian-example",
+wandb.init(
+    project="diffusion-gaussian-example",
 
-#    config={
-#        "learning_rate": 0.003,
-#        "optimizer": "adam",
-#        "architecure": "MLP",
-#        "size": [256, 256, 256, 1],
-#        "epochs": 10
-#    }
-#)
+    config={
+        "learning_rate": 0.003,
+        "optimizer": "adam",
+        "architecure": "MLP",
+        "size": [256, 256, 256, 1],
+        "epochs": 10
+    }
+)
 
 def generate_dataset(N_sample, dataset_number, mu=0.5):
     #start_times = torch.floor(torch.rand(size=(N_sample, 1)) * 2)
     dataset_n = torch.ones(size=(N_sample, 1))*dataset_number
     start_times = torch.zeros(size=(N_sample, 1))
     end_times = start_times + 1
-    dataset_zero = torch.zeros(size=(N_sample, 1))
+    #dataset_zero = torch.zeros(size=(N_sample, 1))
+    dataset_zero = torch.randn(size=(N_sample, 1))
     dataset_one = torch.tensor(np.random.normal(size=(N_sample, 1)), dtype=torch.float32) + mu
     #dataset_two = torch.tensor(np.random.normal(size=(N_sample, 1)), dtype=torch.float32) + 0.5
     if dataset_number > 1:
-        dataset_start = torch.randn_like(dataset_zero) + 0.5
+        dataset_start = torch.randn_like(dataset_zero) + mu/2
     else:
         dataset_start = dataset_zero
 
@@ -43,14 +44,6 @@ def generate_dataset(N_sample, dataset_number, mu=0.5):
     times = torch.rand((N_sample, 1)) + start_times
     #times = torch.ones((N_sample, 1))*1.99999
     """
-    print("dataset " + str(dataset_n))
-    print(dataset_start)
-    print(torch.unique(end_times[start_times==0]))
-    print(torch.unique(end_times[start_times==1]))
-    plt.boxplot(times[start_times ==0])
-    plt.boxplot(times[start_times == 1])
-    plt.title("Distrib  start times")
-    plt.show()
 
     plt.hist(dataset_start[start_times==0], density=True, alpha=0.5, bins=500)
     plt.hist(dataset_start[start_times==1], density=True, alpha=0.5, bins=500)
@@ -97,7 +90,7 @@ def l2_loss(true_data, pred_data):
     return torch.mean((true_data - pred_data) ** 2)
 
 
-def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250):
+def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1 = 50, mu2=100):
     #brid = BrownianBridgeArbitrary(1, a=1, b=3)
     #brid = BrownianBridgeArbitrary(1, a=20, b=3)
     brid = BrownianBridgeArbitrary(1, a=1, b=3)
@@ -105,8 +98,8 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     if retrain is True:
         # Training set
         #start_times, end_times, times, dataset_start, dataset_end = generate_dataset(train_size)
-        start_times1, end_times1, times1, dataset_start1, dataset_end1, dataset_num1 = generate_dataset(int(train_size/2), 1)
-        start_times2, end_times2, times2, dataset_start2, dataset_end2, dataset_num2 = generate_dataset(int(train_size/2), 2, 1)
+        start_times1, end_times1, times1, dataset_start1, dataset_end1, dataset_num1 = generate_dataset(int(train_size/2), 1, mu1)
+        start_times2, end_times2, times2, dataset_start2, dataset_end2, dataset_num2 = generate_dataset(int(train_size/2), 2, mu2)
 
 
         perturbed_dataset1 = brid.sample_bridge(times1, start_times1, end_times1, dataset_start1, dataset_end1)
@@ -120,8 +113,8 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
         #torch.save(perturbed_dataset, "data/gaussian_multiple/perturbed_dataset")
 
         # Test set
-        start_times_test1, end_times_test1, times_test1, dataset_start_test1, dataset_end_test1, dataset_num_test1 = generate_dataset(int(5000/2), 1)
-        start_times_test2, end_times_test2, times_test2, dataset_start_test2, dataset_end_test2, dataset_num_test2 = generate_dataset(int(5000/2), 2, 1)
+        start_times_test1, end_times_test1, times_test1, dataset_start_test1, dataset_end_test1, dataset_num_test1 = generate_dataset(int(5000/2), 1, mu1)
+        start_times_test2, end_times_test2, times_test2, dataset_start_test2, dataset_end_test2, dataset_num_test2 = generate_dataset(int(5000/2), 2, mu2)
         perturbed_dataset_test1 = brid.sample_bridge(times_test1, start_times_test1, end_times_test1, dataset_start_test1, dataset_end_test1)
         perturbed_dataset_test2 = brid.sample_bridge(times_test2, start_times_test2, end_times_test2, dataset_start_test2,
                                                     dataset_end_test2)
@@ -139,7 +132,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
         dataLoad = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
         net = Network([3, 256, 256, 256], [256, 256, 256, 1])
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.0003)
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         dataset_end_test = torch.concat([dataset_end_test1, dataset_end_test2], dim=0)
         perturbed_dataset_test = torch.concat([perturbed_dataset_test1, perturbed_dataset_test2], dim=0)
         times_test = torch.concat([times_test1, times_test2], dim=0)
@@ -182,7 +175,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
             torch.save(net, network_path)
-            #wandb.log({"train_losses": all_losses, "test_loss": loss_test})
+            wandb.log({"train_losses": all_losses, "test_loss": loss_test})
             net.train()
             print("\n\n\n")
 
@@ -217,7 +210,7 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-    run("data/gaussian_multiple/unet", retrain=False,  train_size=500000, batch_size=500, epochs=10000)
+    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=50, epochs=10000)
 
 
 

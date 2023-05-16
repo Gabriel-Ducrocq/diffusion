@@ -156,7 +156,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True, mu=100, data_path="data/gaussian_experiment_mu100a50b7/")
+    run(retrain=False, mu=100, data_path="data/gaussian_experiment_mu100a50b7/")
 
 
 
