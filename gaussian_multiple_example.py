@@ -196,7 +196,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
     plt.hist(test[:, 0].detach().numpy(), density=True, alpha=0.5, bins=20)
-    plt.hist(np.random.normal(size=10000) + 50, density=True, alpha=0.5, bins=20)
+    plt.hist(np.random.normal(size=10000) + 100, density=True, alpha=0.5, bins=20)
     plt.show()
 
     plt.boxplot(test, showfliers=False)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=500, epochs=10000)
+    run("data/gaussian_multiple/unet", retrain=False,  train_size=500000, batch_size=500, epochs=10000)
 
 
 
