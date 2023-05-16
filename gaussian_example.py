@@ -13,17 +13,17 @@ import wandb
 import time
 
 
-#wandb.init(
-#    project="diffusion-gaussian-example",
+wandb.init(
+    project="diffusion-gaussian-example",
     
-#    config={
-#        "learning_rate":0.003,
-#        "optimizer":"adam",
-#        "architecure":"MLP",
-#        "size":[256, 256, 256, 1],
-#        "epochs":10
-#    }
-#)
+    config={
+        "learning_rate":0.003,
+        "optimizer":"adam",
+        "architecure":"MLP",
+        "size":[256, 256, 256, 1],
+        "epochs":10
+    }
+)
 
 
 
@@ -156,7 +156,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=False, mu=100, data_path="/data/gaussian_experiment_mu100a50b5/")
+    run(retrain=True, mu=100, data_path="/data/gaussian_experiment_mu100a50b5/")
 
 
 
