@@ -124,8 +124,8 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment_mu100/"):
             loss_test = l2_loss(dataset_test, pred_test)
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
-            #torch.save(net, data_path + "network")
-            #wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
+            torch.save(net, data_path + "network")
+            wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
 
