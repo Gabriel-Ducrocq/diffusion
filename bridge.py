@@ -96,10 +96,6 @@ class BrownianBridge:
 
         #plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
         #plt.show()
-        print(approximate_expectation)
-        print(self.int_sigma_sq_t(t0, tau))
-        print(self.int_sigma_sq_t(t0, t))
-        print("\n\n")
         approximate_expectation = torch.reshape(approximate_expectation, (x_t.shape[0], self.dimension))
         drift = (approximate_expectation - x_t)/(self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t)**2
         return drift
@@ -198,16 +194,18 @@ class BrownianBridgeArbitrary:
         :param x_max: final value of the bridge
         :return: sample from the distribution at time t
         """
-        int_t = self.int_sigma_sq_t(0, t)
-        int_tmin = self.int_sigma_sq_t(0, t_min)
-        int_tmax = self.int_sigma_sq_t(0, t_max)
-        denom = int_tmax - int_tmin
-        first_term = int_tmax - int_t
-        second_term = int_t - int_tmin
-
+        #int_t = self.int_sigma_sq_t(0, t)
+        #int_tmin = self.int_sigma_sq_t(0, t_min)
+        #int_tmax = self.int_sigma_sq_t(0, t_max)
+        #denom = int_tmax - int_tmin
+        #first_term = int_tmax - int_t
+        #second_term = int_t - int_tmin
         ##I need to add an x_0 because these x_t is Gaussian rv with mean x_0
-        avg = 1/denom * (first_term*(x_min - x_0) + second_term*(x_max-x_0)) + x_0
-        var = int_t - 1/denom * (first_term*int_tmin + second_term*int_t)
+        #avg = 1/denom * (first_term*(x_min - x_0) + second_term*(x_max-x_0)) + x_0
+        #var = int_t - 1/denom * (first_term*int_tmin + second_term*int_t)
+
+        var = self.int_sigma_sq_t(0, t) * (1 - self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max))
+        avg = (self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max)) * (x_max - x_min) + x_min
         return torch.randn_like(avg) * torch.sqrt(var) + avg
 
     def compute_drift_maruyama(self, x_t, t, tau, network, dataset_n, t0=0, Unet=False):

@@ -70,7 +70,6 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment_mu100/"):
         dataset = torch.tensor(np.random.normal(size = (500000,1)) + mu, dtype=torch.float32)
         times = torch.rand((500000, 1))
         perturbed_dataset = brid.sample(times, torch.randn_like(dataset), dataset)
-
         torch.save(dataset, data_path + "dataset")
         torch.save(times, data_path + "times")
         torch.save(perturbed_dataset, data_path + "perturbed_dataset")
@@ -125,8 +124,8 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment_mu100/"):
             loss_test = l2_loss(dataset_test, pred_test)
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
-            torch.save(net, data_path + "network")
-            wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
+            #torch.save(net, data_path + "network")
+            #wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
 
@@ -156,7 +155,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=False, mu=100, data_path="/data/gaussian_experiment_mu100a50b5/")
+    run(retrain=True, mu=100, data_path="data/gaussian_experiment_mu100a50b5/")
 
 
 

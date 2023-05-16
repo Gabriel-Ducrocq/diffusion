@@ -41,7 +41,8 @@ def generate_dataset(N_sample, dataset_number, mu=0.5):
     dataset_end = dataset_one
     #dataset_end[end_times == 2.0] = dataset_two[end_times == 2.0]
 
-    times = torch.rand((N_sample, 1)) + start_times
+    times = torch.rand((N_sample, 1))
+    #times = torch.rand((N_sample, 1)) + start_times
     #times = torch.ones((N_sample, 1))*1.99999
     """
 
@@ -90,7 +91,7 @@ def l2_loss(true_data, pred_data):
     return torch.mean((true_data - pred_data) ** 2)
 
 
-def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1 = 50, mu2=100):
+def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1=50, mu2=50):
     #brid = BrownianBridgeArbitrary(1, a=1, b=3)
     #brid = BrownianBridgeArbitrary(1, a=20, b=3)
     brid = BrownianBridgeArbitrary(1, a=25, b=5)
@@ -99,8 +100,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
         # Training set
         #start_times, end_times, times, dataset_start, dataset_end = generate_dataset(train_size)
         start_times1, end_times1, times1, dataset_start1, dataset_end1, dataset_num1 = generate_dataset(int(train_size/2), 1, mu1)
-        start_times2, end_times2, times2, dataset_start2, dataset_end2, dataset_num2 = generate_dataset(int(train_size/2), 2, mu2)
-
+        start_times2, end_times2, times2, dataset_start2, dataset_end2, dataset_num2 = generate_dataset(int(train_size/2), 1, mu2)
 
         perturbed_dataset1 = brid.sample_bridge(times1, start_times1, end_times1, dataset_start1, dataset_end1)
         perturbed_dataset2 = brid.sample_bridge(times2, start_times2, end_times2, dataset_start2, dataset_end2)
@@ -114,7 +114,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
 
         # Test set
         start_times_test1, end_times_test1, times_test1, dataset_start_test1, dataset_end_test1, dataset_num_test1 = generate_dataset(int(5000/2), 1, mu1)
-        start_times_test2, end_times_test2, times_test2, dataset_start_test2, dataset_end_test2, dataset_num_test2 = generate_dataset(int(5000/2), 2, mu2)
+        start_times_test2, end_times_test2, times_test2, dataset_start_test2, dataset_end_test2, dataset_num_test2 = generate_dataset(int(5000/2), 1, mu2)
         perturbed_dataset_test1 = brid.sample_bridge(times_test1, start_times_test1, end_times_test1, dataset_start_test1, dataset_end_test1)
         perturbed_dataset_test2 = brid.sample_bridge(times_test2, start_times_test2, end_times_test2, dataset_start_test2,
                                                     dataset_end_test2)
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=50, epochs=10000)
+    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=500, epochs=10000)
 
 
 
