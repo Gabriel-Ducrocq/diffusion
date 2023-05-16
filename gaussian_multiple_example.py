@@ -210,7 +210,7 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-    run("data/gaussian_multiple/unet", retrain=False,  train_size=500000, batch_size=500, epochs=10000)
+    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=500, epochs=10000)
 
 
 
