@@ -68,13 +68,14 @@ class BrownianBridge:
         return torch.randn_like(means)*torch.sqrt(variances) + means
 
 
-    def compute_drift_maruyama(self, x_t, t, tau, network, t0=0, Unet=False):
+    def compute_drift_maruyama(self, x_t, t, tau, network, t0=0, Unet=False, observation=None):
         """
         Computing the drift part of the SDE
         :param x_t:
         :param time:
         :param network:
         :Unet: Boolean, if True, set the input in the Unet format.
+        :param observation: if not None, means we are doing conditional inference
         :return:
         """
         #input = torch.concat([x_t, t], dim=-1)
@@ -86,7 +87,11 @@ class BrownianBridge:
             else:
                 batch_size = x_t.shape[0]
                 t = t.repeat(batch_size, 1)
-                input = torch.concat([x_t, t], dim=-1)
+                if observation is not None:
+                    input = torch.concat([observation, x_t, t], dim=-1)
+                else:
+                    input = torch.concat([x_t, t], dim=-1)
+
                 approximate_expectation = network.forward(input)
 
         #plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
@@ -95,7 +100,7 @@ class BrownianBridge:
         drift = (approximate_expectation - x_t)/(self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t)**2
         return drift
 
-    def euler_maruyama(self, x_0, times, tau, network):
+    def euler_maruyama(self, x_0, times, tau, network, observation=None):
         """
 
         :param x_0: torch.tensor(1, dim_process), starting point of the Euler-Maruyama scheme
@@ -114,7 +119,7 @@ class BrownianBridge:
             if i%10 == 0:
                 print(i)
 
-            drift = self.compute_drift_maruyama(x_t=x_t, t=t, tau=tau, network=network)
+            drift = self.compute_drift_maruyama(x_t=x_t, t=t, tau=tau, network=network, observation=observation)
             ##Check transposition here
             x_t_new = x_t + drift * (t_new - t) + np.sqrt((t_new - t)) * torch.randn((batch_size, self.dimension))*self.sigma_t(t)
             #print(drift)

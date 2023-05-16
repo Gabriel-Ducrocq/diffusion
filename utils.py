@@ -24,6 +24,22 @@ class dataSet(Dataset):
         return self.images[idx], self.perturbed_images[idx], self.times[idx]
 
 
+
+class dataSetLikelihoodFree(Dataset):
+
+    def __init__(self, data, param, perturbed_param, times):
+        self.data = data
+        self.param = param
+        self.perturbed_param = perturbed_param
+        self.times = times
+
+    def __len__(self):
+        return self.data.shape[0]
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.param[idx], self.perturbed_param[idx], self.times[idx]
+
+
 class dataSetMultiple(Dataset):
 
     def __init__(self, images, perturbed_images, times, dataset_num):
