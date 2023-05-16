@@ -91,7 +91,7 @@ def l2_loss(true_data, pred_data):
     return torch.mean((true_data - pred_data) ** 2)
 
 
-def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1=50, mu2=50):
+def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1=50, mu2=100):
     #brid = BrownianBridgeArbitrary(1, a=1, b=3)
     #brid = BrownianBridgeArbitrary(1, a=20, b=3)
     brid = BrownianBridgeArbitrary(1, a=25, b=5)
