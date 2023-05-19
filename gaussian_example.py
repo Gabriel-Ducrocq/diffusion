@@ -64,7 +64,7 @@ def run(retrain=False, mu = 1, data_path="data/gaussian_experiment_mu100/"):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
     #brid = BrownianBridge(1, a=1, b=3)
-    brid = BrownianBridge(1, a=25, b=5)
+    brid = BrownianBridge(1, a=1, b=3)
     if retrain is True:
         #Training set
         dataset = torch.tensor(np.random.normal(size = (500000,1)) + mu, dtype=torch.float32)
@@ -155,7 +155,7 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True, mu=50, data_path="data/gaussian_experiment_mu50a25b5/")
+    run(retrain=True, mu=50, data_path="data/gaussian_experiment_mu50a1b3/")
 
 
 
