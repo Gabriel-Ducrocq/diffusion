@@ -184,11 +184,11 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     times = torch.tensor(np.linspace(0, 1, 1000), dtype=torch.float32)[1:, None]
     print(times)
     #Starting at 1 !!
-    dataset_n = torch.ones((10000, 1))*2
-    traj, test = brid.euler_maruyama(torch.randn(10000, 1) + 50, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
+    dataset_n = torch.ones((10000, 1))*1
+    traj, test = brid.euler_maruyama(torch.randn(10000, 1) + 0 , times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
 
-    #dataset_n = torch.ones((10000, 1))*2
-    #traj, test = brid.euler_maruyama(test, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
+    dataset_n = torch.ones((10000, 1))*2
+    traj, test = brid.euler_maruyama(test, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
     #traj, test = brid.euler_maruyama(torch.randn(size=(10000, 1))+0.5, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
 
 
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     # d2 = np.load("data/gaussian/generatedData2.npy")
     # plt.boxplot([d1, d2], showfliers=False)
     # plt.show()
-    run("data/gaussian_multiple/unet", retrain=False,  train_size=500000, batch_size=500, epochs=10000)
+    run("data/gaussian_multiple/unet", retrain=True,  train_size=500000, batch_size=500, epochs=10000)
 
 
 
