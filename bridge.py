@@ -50,7 +50,6 @@ class BrownianBridge:
         :param T: float, time of the ending value
         :return: torch tensor (N_batch, 1), conditional variances at time t
         """
-        ### Change from T to t in the first term of the product
         return self.int_sigma_sq_t(t0, t)*(1- self.int_sigma_sq_t(t0, t)/self.int_sigma_sq_t(t0, T))
 
     def sample(self, t, x0, xT,  t0=0, T=1):
@@ -175,14 +174,8 @@ class BrownianBridgeArbitrary:
     def sigma_t(self, t):
         return self.a * np.exp(-self.b * t)
 
-    #def sigma_t(self, t):
-    #        return self.a * np.exp(-self.b * (t-1))
-
     def int_sigma_sq_t(self, t0, t):
         return - self.a ** 2 / (2 * self.b) * (np.exp(-2 * self.b * t) - np.exp(-2 * self.b * t0))
-
-    #def int_sigma_sq_t(self, t0, t):
-    #    return - self.a ** 2 / (2 * self.b) * (np.exp(-2 * self.b * (t-1)) - np.exp(-2 * self.b * (t0-1)))
 
     def sample_bridge(self, t, t_min, t_max, x_min, x_max, x_0=0):
         """
@@ -194,17 +187,9 @@ class BrownianBridgeArbitrary:
         :param x_max: final value of the bridge
         :return: sample from the distribution at time t
         """
-        #int_t = self.int_sigma_sq_t(0, t)
-        #int_tmin = self.int_sigma_sq_t(0, t_min)
-        #int_tmax = self.int_sigma_sq_t(0, t_max)
-        #denom = int_tmax - int_tmin
-        #first_term = int_tmax - int_t
-        #second_term = int_t - int_tmin
-        ##I need to add an x_0 because these x_t is Gaussian rv with mean x_0
-        #avg = 1/denom * (first_term*(x_min - x_0) + second_term*(x_max-x_0)) + x_0
-        #var = int_t - 1/denom * (first_term*int_tmin + second_term*int_t)
-
+        #var = self.int_sigma_sq_t(0, t) * (1 - self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max))
         var = self.int_sigma_sq_t(0, t) * (1 - self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max))
+        #avg = (self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max)) * (x_max - x_min) + x_min
         avg = (self.int_sigma_sq_t(0, t) / self.int_sigma_sq_t(0, t_max)) * (x_max - x_min) + x_min
         return torch.randn_like(avg) * torch.sqrt(var) + avg
 
@@ -229,9 +214,12 @@ class BrownianBridgeArbitrary:
                 input = torch.concat([x_t, t, dataset_n], dim=-1)
                 approximate_expectation = network.forward(input)
 
+        #approximate_expectation = torch.reshape(approximate_expectation, (x_t.shape[0], self.dimension))
+        #drift = (approximate_expectation - x_t) / (
+        #            self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t) ** 2
+
         approximate_expectation = torch.reshape(approximate_expectation, (x_t.shape[0], self.dimension))
-        drift = (approximate_expectation - x_t) / (
-                    self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t) ** 2
+        drift = (approximate_expectation - x_t)/(self.int_sigma_sq_t(t0, tau) - self.int_sigma_sq_t(t0, t)) * self.sigma_t(t)**2
         return drift
 
     def euler_maruyama(self, x_0, times, tau, network, dataset_n, t_0=torch.zeros((1, 1), dtype=torch.float32)):

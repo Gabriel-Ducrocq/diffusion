@@ -44,7 +44,7 @@ def generate_dataset(N_sample, dataset_number, mu=0.5):
     times = torch.rand((N_sample, 1))
     #times = torch.rand((N_sample, 1)) + start_times
     #times = torch.ones((N_sample, 1))*1.99999
-    """
+
 
     plt.hist(dataset_start[start_times==0], density=True, alpha=0.5, bins=500)
     plt.hist(dataset_start[start_times==1], density=True, alpha=0.5, bins=500)
@@ -60,7 +60,7 @@ def generate_dataset(N_sample, dataset_number, mu=0.5):
     plt.hist(dataset_end[end_times==2], density=True, alpha=0.5, bins=500)
     plt.title("Distrib  end dataset again")
     plt.show()
-    """
+
 
     return start_times, end_times, times, dataset_start, dataset_end, dataset_n
 
@@ -94,9 +94,11 @@ def l2_loss(true_data, pred_data):
 def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=250, mu1=50, mu2=100):
     #brid = BrownianBridgeArbitrary(1, a=1, b=3)
     #brid = BrownianBridgeArbitrary(1, a=20, b=3)
-    brid = BrownianBridgeArbitrary(1, a=25, b=5)
+    #brid = BrownianBridgeArbitrary(1, a=25, b=5)
+    brid = BrownianBridge(1, a=25, b=5)
     #bridNormal = BrownianBridge(1, a=20, b=3)
     if retrain is True:
+        """
         # Training set
         #start_times, end_times, times, dataset_start, dataset_end = generate_dataset(train_size)
         start_times1, end_times1, times1, dataset_start1, dataset_end1, dataset_num1 = generate_dataset(int(train_size/2), 1, mu1)
@@ -120,6 +122,8 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
         perturbed_dataset_test1 = brid.sample_bridge(times_test1, start_times_test1, end_times_test1, dataset_start_test1, dataset_end_test1)
         perturbed_dataset_test2 = brid.sample_bridge(times_test2, start_times_test2, end_times_test2, dataset_start_test2,
                                                     dataset_end_test2)
+        
+        
         #perturbed_dataset_test = bridNormal.sample(times_test, dataset_start_test, dataset_end_test)
 
         #torch.save(dataset_test, "data/gaussian_multiple/dataset_test")
@@ -133,17 +137,35 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
         dataset = dataSetMultiple(dataset_end, perturbed_dataset, times, dataset_num)
         dataLoad = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-        net = Network([3, 256, 256, 256], [256, 256, 256, 1])
-        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         dataset_end_test = torch.concat([dataset_end_test1, dataset_end_test2], dim=0)
         perturbed_dataset_test = torch.concat([perturbed_dataset_test1, perturbed_dataset_test2], dim=0)
         times_test = torch.concat([times_test1, times_test2], dim=0)
         dataset_num_test = torch.concat([dataset_num_test1, dataset_num_test2], dim=0)
         input_test = torch.concat([perturbed_dataset_test, times_test, dataset_num_test], dim=-1)
+        """
+        net = Network([3, 256, 256, 256], [256, 256, 256, 1])
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
+        #Test dataset
+        dataset = torch.tensor(np.random.normal(size = (500000,1)) + 50, dtype=torch.float32)
+        times = torch.rand((500000, 1))
+        perturbed_dataset = brid.sample(times, torch.randn((500000, 1)), dataset)
+        dataset_num = torch.ones((500000, 1))
+        dataset = dataSetMultiple(dataset, perturbed_dataset, times, dataset_num)
+        dataLoad = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+        dataset_test = torch.tensor(np.random.normal(size = (5000,1)) + 50, dtype=torch.float32)
+        times_test = torch.rand((5000, 1))
+        perturbed_dataset_test = brid.sample(times_test, torch.randn((5000, 1)), dataset_test)
+        dataset_num_test = torch.ones((5000, 1))
+        #input_test = torch.concat([perturbed_dataset_test, times_test, dataset_num_test], dim=-1)
+        input_test = torch.concat([perturbed_dataset_test, times_test], dim=-1)
+
+        net = Network([2, 256, 256, 256], [256, 256, 256, 1])
+        optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         net.eval()
         pred_test = net.forward(input_test)
-        loss_test = l2_loss(dataset_end_test, pred_test)
+        #loss_test = l2_loss(dataset_end_test, pred_test)
+        loss_test = l2_loss(dataset_test, pred_test)
         #print("EPOCH:", n_epoch)
         print("LOSS TEST", torch.sqrt(loss_test))
         torch.save(net, network_path)
@@ -161,7 +183,8 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
             all_losses = []
             for n_batch in range(n_iter):
                 data_batch, perturbed_data_batch, time_batch, dataset_n_batch = next(data)
-                input_batch = torch.concat([perturbed_data_batch, time_batch, dataset_n_batch], dim=-1)
+                #input_batch = torch.concat([perturbed_data_batch, time_batch, dataset_n_batch], dim=-1)
+                input_batch = torch.concat([perturbed_data_batch, time_batch], dim=-1)
                 pred_data = net.forward(input_batch)
                 loss = l2_loss(data_batch, pred_data)
                 loss.backward()
@@ -173,7 +196,8 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
             print(np.mean(all_losses))
             net.eval()
             pred_test = net.forward(input_test)
-            loss_test = l2_loss(dataset_end_test, pred_test)
+            #loss_test = l2_loss(dataset_end_test, pred_test)
+            loss_test = l2_loss(dataset_test, pred_test)
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
             torch.save(net, network_path)
@@ -187,8 +211,9 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     print(times)
     #Starting at 1 !!
     dataset_n = torch.ones((10000, 1))*1
-    traj, test = brid.euler_maruyama(torch.randn(10000, 1) + 50 , times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
-
+    #traj, test = brid.euler_maruyama(torch.randn(10000, 1), times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
+    traj, test = brid.euler_maruyama(torch.randn(10000, 1), times[:, :, None], 1,  unet)
+    #(self, x_0, times, tau, network, observation=None)
     #dataset_n = torch.ones((10000, 1))*2
     #traj, test = brid.euler_maruyama(test, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
     #traj, test = brid.euler_maruyama(torch.randn(size=(10000, 1))+0.5, times[:, :, None], 1,  unet, dataset_n, t_0=torch.zeros((1,1)))
@@ -198,7 +223,7 @@ def run(network_path, retrain=False, train_size=500000, batch_size=500, epochs=2
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
     plt.hist(test[:, 0].detach().numpy(), density=True, alpha=0.5, bins=20)
-    plt.hist(np.random.normal(size=10000)*np.sqrt(2) + 100, density=True, alpha=0.5, bins=20)
+    plt.hist(np.random.normal(size=10000) + 50, density=True, alpha=0.5, bins=20)
     plt.show()
 
     plt.boxplot(test, showfliers=False)
