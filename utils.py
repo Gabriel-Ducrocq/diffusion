@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 
 
 
-def l2_loss(true_images, images):
+def l2_loss_image(true_images, images):
     return torch.mean(torch.sum((true_images - images)**2, dim=(-1,-2)))
 
 
@@ -99,3 +99,22 @@ class SinusoidalPositionEmbeddings(nn.Module):
         embeddings = time[:, None] * embeddings[None, :]
         embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
         return embeddings
+
+
+
+def sample_pertubed_data(data, brid, number_dataset):
+    all_times = []
+    all_perturbed_dataset = []
+    for _ in range(number_dataset):
+        times = torch.rand((data.shape[0], 1))
+        perturbed_dataset = brid.sample(times, torch.zeros_like(data), data)
+        all_times.append(times)
+        all_perturbed_dataset.append(perturbed_dataset)
+
+    all_times = torch.concat(all_times, dim=0)
+    all_perturbed_dataset = torch.concat(all_perturbed_dataset, dim=0)
+    return all_perturbed_dataset, all_times
+
+
+def l2_loss(true_data, pred_data):
+    return torch.mean(torch.sum((true_data - pred_data)**2, dim=-1))

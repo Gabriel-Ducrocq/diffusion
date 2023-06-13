@@ -88,13 +88,16 @@ def compute_partition_function(observed_data):
 
 
 def run(retrain=True, data_path="data/likelihood_free/"):
-    brid = BrownianBridge(1, a=25, b=5)
+    #brid = BrownianBridge(1, a=25, b=5)
+    #brid = BrownianBridge(1, a=2, b=3)
+    brid = BrownianBridge(1, a=1, b=4)
     if retrain:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device:", device)
         # brid = BrownianBridge(1, a=1, b=3)
 
-        dataset_data, dataset_param, times, perturbed_dataset = sample_pertubed_data(500000, brid)
+        #dataset_data, dataset_param, times, perturbed_dataset = sample_pertubed_data(500000, brid)
+        dataset_data, dataset_param, times, perturbed_dataset = sample_pertubed_data(20000, brid)
         torch.save(dataset_data, data_path + "dataset_data")
         torch.save(dataset_param, data_path + "dataset_param")
         torch.save(times, data_path + "times")
@@ -123,7 +126,8 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             data = iter(dataLoad)
             all_losses = []
             start = time.time()
-            for n_batch in range(10000):
+            #for n_batch in range(10000):
+            for n_batch in range(400):
                 data_batch, param_batch, perturbed_param_batch, time_batch = next(data)
                 data_batch = data_batch.to(device)
                 batch_size = data_batch.shape[0]
@@ -152,16 +156,16 @@ def run(retrain=True, data_path="data/likelihood_free/"):
 
     unet = torch.load(data_path + "network", map_location=torch.device('cpu'))
     unet.eval()
-    times = torch.tensor(np.linspace(0, 1, 1000), dtype=torch.float32)[:, None]
-    traj, test = brid.euler_maruyama(torch.randn(100000, 1),times[:, :, None], 1, unet, observation=torch.ones((100000,1), dtype=torch.float32)*8)
+    times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None]
+    traj, test = brid.euler_maruyama(torch.randn(10000, 1),times[:, :, None], 1, unet, observation=torch.ones((10000,1), dtype=torch.float32)*(-1.497))
 
     #np.save("data/gaussian/generatedData2.npy", test[:, 0].detach().numpy())
     print("\n\n")
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
-    plt.hist(test[:, 0].detach().numpy(), density=True, alpha=0.5, bins= 60)
-    xx = np.linspace(3, 13, 10000)
-    observed_data = 8
+    plt.hist(test[:, 0].detach().numpy(), density=True, alpha=0.5, bins= 30)
+    xx = np.linspace(-4, 1, 10000)
+    observed_data = -1.497
     y = np.array([compute_prior(x)*compute_likelihood(x, observed_data)/compute_partition_function(observed_data) for x in xx])
     #y = np.array([compute_likelihood(x, observed_data) for x in xx])
     #plt.hist(sampled_posterior[:, -1, 0], bins=40, density=True, alpha=0.5)
@@ -176,4 +180,4 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=False)
+    run(retrain=True)

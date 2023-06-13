@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: diffusion
+Version: 0.1
+Summary: Running non denoising diffusion models for likelihood free inference
+Home-page: #
+Author: Gabriel Ducrocq
+Author-email: gabrielducrocq.maths@gmail.com
+License: MIT
