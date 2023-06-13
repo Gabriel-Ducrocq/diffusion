@@ -14,6 +14,11 @@ import time
 import scipy as sp
 
 
+
+wandb.init(
+    project="diffusion-mixture"
+)
+
 class Network(nn.Module):
     def __init__(self, dims_in, dims_out, dropout_rate =0.0):
         super().__init__()
@@ -149,7 +154,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
             torch.save(net, data_path + "network")
-            #wandb.log({"train_losses": all_losses, "test_loss": loss_test.detach().cpu().numpy()})
+            wandb.log({"train_losses": loss.detach().cpu().numpy(), "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
 
