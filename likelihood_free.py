@@ -12,6 +12,7 @@ from utils import dataSetLikelihoodFree
 import wandb
 import time
 import scipy as sp
+from ema_pytorch import EMA
 
 
 
@@ -120,6 +121,12 @@ def run(retrain=True, data_path="data/likelihood_free/"):
 
         net = Network([3, 256, 256, 256], [256, 256, 256, 1])
         net = net.to(device)
+        ema = EMA(
+            net,
+            beta=0.999,  # exponential moving average factor
+            update_after_step=0,  # only after this number of .update() calls will it start updating
+            update_every=1,  # how often to actually update, to save on compute (updates every 10th .update() call)
+        )
         #optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         optimizer = torch.optim.Adam(net.parameters(), lr=0.00003)
         epochs = 10000
@@ -146,6 +153,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
+                ema.update()
                 all_losses.append(loss.detach().cpu().numpy())
 
             end = time.time()
@@ -157,6 +165,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
             torch.save(net, data_path + "network")
+            torch.save(ema, data_path + "network_ema")
             wandb.log({"train_losses": loss.detach().cpu().numpy(), "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
