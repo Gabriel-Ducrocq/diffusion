@@ -135,9 +135,12 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             for n_batch in range(400):
                 data_batch, param_batch, perturbed_param_batch, time_batch = next(data)
                 data_batch = data_batch.to(device)
+                param_batch = param_batch.to(device)
+                perturbed_param_batch = perturbed_param_batch.to(device)
+                time_batch = time_batch.to(device)
                 batch_size = data_batch.shape[0]
                 input_batch = torch.concat([data_batch, perturbed_param_batch, time_batch], dim = -1)
-                input_batch = input_batch.to(device)
+                #input_batch = input_batch.to(device)
                 pred_data = net.forward(input_batch)
                 loss = l2_loss(param_batch, pred_data)
                 loss.backward()
@@ -185,4 +188,4 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True)
+    run(retrain=False)
