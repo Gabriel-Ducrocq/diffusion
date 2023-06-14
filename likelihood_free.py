@@ -47,16 +47,16 @@ class Network(nn.Module):
         return x
 
 def l2_loss(true_data, pred_data):
-    return torch.mean((true_data - pred_data)**2)
+    return torch.mean(torch.sum((true_data - pred_data)**2, dim=-1))
 
 def prior(N_sample):
-    return np.random.uniform(-10, 10, size=(N_sample,1))
+    return np.random.uniform(-10, 10, size=(N_sample,2))
 
 def likelihood(theta, N_sample):
     sigma = np.ones((N_sample,1))
     unifs = np.random.uniform(size=N_sample)
     sigma[unifs < 0.5] = np.sqrt(0.01)
-    return theta + np.random.normal(size=(N_sample,1))*sigma
+    return theta + np.random.normal(size=(N_sample,2))*sigma
 
 
 def sample_dataset(N_sample):
@@ -95,7 +95,7 @@ def compute_partition_function(observed_data):
 def run(retrain=True, data_path="data/likelihood_free/"):
     #brid = BrownianBridge(1, a=25, b=5)
     #brid = BrownianBridge(1, a=2, b=3)
-    brid = BrownianBridge(1, a=1, b=4)
+    brid = BrownianBridge(2, a=1, b=4)
     if retrain:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device:", device)
@@ -118,7 +118,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
         dataset = dataSetLikelihoodFree(dataset_data, dataset_param, perturbed_dataset, times)
         dataLoad = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
-        net = Network([3, 256, 256, 256], [256, 256, 256, 1])
+        net = Network([5, 256, 256, 256], [256, 256, 256, 2])
         net = net.to(device)
         ema = EMA(
             net,
@@ -163,8 +163,8 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             loss_test = l2_loss(dataset_param_test, pred_test)
             print("EPOCH:", n_epoch)
             print("LOSS TEST", torch.sqrt(loss_test))
-            torch.save(net, data_path + "network")
-            torch.save(ema, data_path + "network_ema")
+            torch.save(net, data_path + "network_2d")
+            torch.save(ema, data_path + "network_ema_2d")
             wandb.log({"train_losses": loss.detach().cpu().numpy(), "test_loss": loss_test.detach().cpu().numpy()})
             net.train()
             print("\n\n\n")
