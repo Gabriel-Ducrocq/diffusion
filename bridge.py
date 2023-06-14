@@ -91,7 +91,7 @@ class BrownianBridge:
                 else:
                     input = torch.concat([x_t, t], dim=-1)
 
-                approximate_expectation = network.forward(input)
+                approximate_expectation = network(input)
 
         #plt.imshow(approximate_expectation[0, 0].detach().numpy(), cmap="gray")
         #plt.show()
