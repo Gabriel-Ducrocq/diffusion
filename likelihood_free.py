@@ -70,7 +70,7 @@ def sample_pertubed_data(N_sample, brid):
     dataset_param = torch.tensor(dataset_param, dtype=torch.float32)
     times = torch.rand((N_sample, 1))
     ##Trying with a dirac starting point !
-    perturbed_dataset = brid.sample(times, torch.zeros_like(dataset_param), dataset_param)
+    perturbed_dataset = brid.sample(times, torch.randn_like(dataset_param), dataset_param)
     #perturbed_dataset = brid.sample(times, torch.randn_like(dataset_param), dataset_param)
     return dataset_data , dataset_param,times, perturbed_dataset
 
@@ -97,7 +97,8 @@ def compute_partition_function(observed_data):
 def run(retrain=True, data_path="data/likelihood_free/"):
     #brid = BrownianBridge(1, a=25, b=5)
     #brid = BrownianBridge(1, a=2, b=3)
-    brid = BrownianBridge(2, a=1, b=4)
+    #brid = BrownianBridge(2, a=1, b=4)
+    brid = BrownianBridge(2, a=3, b=4)
     if retrain:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device:", device)
@@ -174,9 +175,9 @@ def run(retrain=True, data_path="data/likelihood_free/"):
     unet = torch.load(data_path + "network_ema_2d", map_location=torch.device('cpu'))
     unet.eval()
     times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None]
-    traj, test = brid.euler_maruyama(torch.zeros(10000, 2),times[:, :, None], 1, unet, observation=torch.ones((10000,2), dtype=torch.float32)*torch.tensor([[-9.4727, -1.4951]]))
+    traj, test = brid.euler_maruyama(torch.randn_like(10000, 2),times[:, :, None], 1, unet, observation=torch.ones((10000,2), dtype=torch.float32)*torch.tensor([[-9.4727, -1.4951]]))
 
-    np.save(data_path + "generatedData_ema_2d.npy", test[:, 0].detach().numpy())
+    np.save(data_path + "generatedData_ema_2d.npy", test.detach().numpy())
     print("\n\n")
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
@@ -197,4 +198,4 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=False)
+    run(retrain=True)
