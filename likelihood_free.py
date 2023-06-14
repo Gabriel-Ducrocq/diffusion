@@ -23,7 +23,6 @@ wandb.init(
 class Network(nn.Module):
     def __init__(self, dims_in, dims_out, dropout_rate =0.0):
         super().__init__()
-
         #drop_layer = nn.Dropout(p=dropout_rate)
         n_layers = len(dims_out)
         assert dims_out[:-1] == dims_in[1:], "Dimension of subsequent layer not matching"
