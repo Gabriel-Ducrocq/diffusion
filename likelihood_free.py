@@ -69,7 +69,9 @@ def sample_pertubed_data(N_sample, brid):
     dataset_data = torch.tensor(dataset_data, dtype=torch.float32)
     dataset_param = torch.tensor(dataset_param, dtype=torch.float32)
     times = torch.rand((N_sample, 1))
-    perturbed_dataset = brid.sample(times, torch.randn_like(dataset_param), dataset_param)
+    ##Trying with a dirac starting point !
+    perturbed_dataset = brid.sample(times, torch.zeros_like(dataset_param), dataset_param)
+    #perturbed_dataset = brid.sample(times, torch.randn_like(dataset_param), dataset_param)
     return dataset_data , dataset_param,times, perturbed_dataset
 
 
@@ -144,7 +146,6 @@ def run(retrain=True, data_path="data/likelihood_free/"):
                 param_batch = param_batch.to(device)
                 perturbed_param_batch = perturbed_param_batch.to(device)
                 time_batch = time_batch.to(device)
-                batch_size = data_batch.shape[0]
                 input_batch = torch.concat([data_batch, perturbed_param_batch, time_batch], dim = -1)
                 #input_batch = input_batch.to(device)
                 pred_data = net.forward(input_batch)
