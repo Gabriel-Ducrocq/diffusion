@@ -99,7 +99,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
     #brid = BrownianBridge(1, a=2, b=3)
     #brid = BrownianBridge(2, a=1, b=4)
     #brid = BrownianBridge(2, a=3, b=4)
-    brid = BrownianBridge(2, a=0.1, b=4)
+    brid = BrownianBridge(2, a=4, b=5)
     if retrain:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device:", device)
