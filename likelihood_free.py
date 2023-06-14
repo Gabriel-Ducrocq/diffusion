@@ -171,12 +171,12 @@ def run(retrain=True, data_path="data/likelihood_free/"):
             print("\n\n\n")
 
 
-    unet = torch.load(data_path + "network", map_location=torch.device('cpu'))
+    unet = torch.load(data_path + "network_ema_2d", map_location=torch.device('cpu'))
     unet.eval()
     times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None]
-    traj, test = brid.euler_maruyama(torch.randn(10000, 1),times[:, :, None], 1, unet, observation=torch.ones((10000,1), dtype=torch.float32)*(-1.497))
+    traj, test = brid.euler_maruyama(torch.zeros(10000, 2),times[:, :, None], 1, unet, observation=torch.ones((10000,2), dtype=torch.float32)*torch.tensor([[-9.4727, -1.4951]]))
 
-    #np.save("data/gaussian/generatedData2.npy", test[:, 0].detach().numpy())
+    np.save(data_path + "generatedData_ema_2d.npy", test[:, 0].detach().numpy())
     print("\n\n")
     print(np.mean(test[:, 0].detach().numpy()))
     print(np.var(test[:, 0].detach().numpy()))
@@ -197,4 +197,4 @@ if __name__=="__main__":
     #plt.boxplot([d1, d2], showfliers=False)
     #plt.show()
 
-    run(retrain=True)
+    run(retrain=False)
