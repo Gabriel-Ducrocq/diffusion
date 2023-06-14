@@ -98,7 +98,8 @@ def run(retrain=True, data_path="data/likelihood_free/"):
     #brid = BrownianBridge(1, a=25, b=5)
     #brid = BrownianBridge(1, a=2, b=3)
     #brid = BrownianBridge(2, a=1, b=4)
-    brid = BrownianBridge(2, a=3, b=4)
+    #brid = BrownianBridge(2, a=3, b=4)
+    brid = BrownianBridge(2, a=0.1, b=4)
     if retrain:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Device:", device)
@@ -175,7 +176,7 @@ def run(retrain=True, data_path="data/likelihood_free/"):
     unet = torch.load(data_path + "network_ema_2d", map_location=torch.device('cpu'))
     unet.eval()
     times = torch.tensor(np.linspace(0, 1, 10000), dtype=torch.float32)[:, None]
-    traj, test = brid.euler_maruyama(torch.randn_like(10000, 2),times[:, :, None], 1, unet, observation=torch.ones((10000,2), dtype=torch.float32)*torch.tensor([[-9.4727, -1.4951]]))
+    traj, test = brid.euler_maruyama(torch.randn(10000, 2),times[:, :, None], 1, unet, observation=torch.ones((10000,2), dtype=torch.float32)*torch.tensor([[-9.4727, -1.4951]]))
 
     np.save(data_path + "generatedData_ema_2d.npy", test.detach().numpy())
     print("\n\n")
